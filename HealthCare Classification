@@ -1,0 +1,80 @@
+import pandas as pd
+import seaborn as sns
+import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+# reading file
+df = pd.read_csv('F:/Z Internetu/kodziki/pycharm/jakies stroki/healthcare-dataset-stroke-data.csv')
+# naming the columns
+df.columns = ['id', 'gender', 'age', 'hypertension', 'heart disease', 'ever married', 'work type', 'residence type',
+              'avg glucose level', 'bmi', 'smoking status', 'stroke']
+# checking data for nulls
+print(df.head())
+# filling n/a data with averages for bmi column
+df1 = df.fillna(df.mean())
+# checking for n/a again
+print(df1.isnull().sum())
+# heatmap for correlation
+correlation = df1.corr()
+print(df1.head(2))
+# print(correlation)
+htmap = sns.heatmap(correlation, annot=True)
+# plt.show()
+# let us drop id column as well as non-number columns
+X = df1.drop(['id', 'gender', 'smoking status', 'ever married', 'work type', 'residence type'], axis=1)
+print(X.head(3))
+# labeling
+Y = df1.iloc[:, :1]
+print('index head')
+print(Y.head())
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=0)
+# checking test sizes
+print('shapes')
+print(X_train.shape)
+print(X_test.shape)
+print(Y_train.shape)
+print(Y_test.shape)
+scaler = preprocessing.StandardScaler().fit(X_train)
+X_scaled = scaler.transform(X_train)
+pipe = make_pipeline(StandardScaler(), LogisticRegression())
+pipe.fit(X_train, np.ravel(Y_train))  # apply scaling on training data
+pipe.score(X_test, Y_test)
+print('before models')
+models = [("Logistic Regression:", LogisticRegression(max_iter=1000)),
+          ("Naive Bayes:", GaussianNB()),
+          ("K-Nearest Neighbour:", KNeighborsClassifier(n_neighbors=3)),
+          ("Decision Tree:", DecisionTreeClassifier()),
+          ("Support Vector Machine-linear:", SVC(kernel="linear")),
+          ("Support Vector Machine-rbf:", SVC(kernel="rbf")),
+          ("Random Forest:", RandomForestClassifier(n_estimators=7)),
+          ("AdaBoostClassifier:", AdaBoostClassifier()),
+          ("eXtreme Gradient Boost:", XGBClassifier()),
+          ("GradientBoostingClassifier:", GradientBoostingClassifier())]
+print('Success')
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10)
+    crossvalres = cross_val_score(model, X_train, Y_train.values.ravel(), cv=kfold, scoring="accuracy")
+    names.append(name)
+    results.append(crossvalres)
+for i in range(len(names)):
+    print(names[i], results[i].mean() * 100)
+# """
